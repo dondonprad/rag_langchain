@@ -1,5 +1,5 @@
 # ==============================================================================
-# Requirements untuk Project Emas - Modul RAG PUSDIKZI (Fase PoC)
+# Requirements untuk rag_langchain (Fase PoC)
 # On-Premise Air-Gapped & Intel Core Ultra 125H
 # ==============================================================================
 
@@ -16,16 +16,12 @@ fastapi>=0.115.0
 python-multipart>=0.0.9
 uvicorn>=0.30.0
 
-# Parsing Dokumen On-Premise
-pypdf>=4.0.0
-pymupdf>=1.23.0
-python-docx>=1.1.0
-openpyxl>=3.1.0
-xlrd>=2.0.1
-olefile>=0.46
+# Parsing & Pengolahan Dokumen Markdown On-Premise
+markdown>=3.5.0
 
-# Embedding & NLP
+# Embedding, Reranking & NLP
 sentence-transformers>=2.3.0
+rank-bm25>=0.2.2
 einops>=0.7.0
 torch>=2.1.0
 

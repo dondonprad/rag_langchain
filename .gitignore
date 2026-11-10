@@ -6,11 +6,13 @@ venv/
 env/
 .env
 
-# Data Mentah & Data Rahasia PUSDIKZI (Zero Data Leakage / Air-Gapped)
+# Data Mentah & Data Olahan (Air-Gapped / Lokal)
 data/raw/*
 !data/raw/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+data/dlq/*
+!data/dlq/.gitkeep
 
 # ChromaDB Data Storage (Local Container Volume)
 chroma_data/

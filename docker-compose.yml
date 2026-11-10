@@ -1,0 +1,64 @@
+name: rag-langchain
+
+services:
+  chroma:
+    image: chromadb/chroma:latest
+    container_name: rag-langchain-chromadb
+    restart: unless-stopped
+    ports:
+      - "${CHROMA_PORT:-8001}:8000"
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/data
+      - ANONYMIZED_TELEMETRY=FALSE
+      - ALLOW_RESET=TRUE
+    volumes:
+      - rag_langchain_chroma_data:/data
+    networks:
+      - rag_langchain_net
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q '1F40' /proc/net/tcp || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: rag-langchain-openwebui
+    restart: unless-stopped
+    ports:
+      - "${OPENWEBUI_PORT:-3000}:8080"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - OLLAMA_BASE_URL=${OLLAMA_URL_DOCKER:-http://host.docker.internal:11434}
+      - WEBUI_NAME=RAG LangChain Assistant
+      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY:-rag-langchain-secret-key-poc}
+      - ENABLE_SIGNUP=${OPENWEBUI_ENABLE_SIGNUP:-true}
+      - DEFAULT_MODELS=${OLLAMA_MODEL:-qwen2.5-7b-int4}
+    volumes:
+      - rag_langchain_openwebui_data:/app/backend/data
+    networks:
+      - rag_langchain_net
+    deploy:
+      resources:
+        limits:
+          memory: 2048M
+
+volumes:
+  rag_langchain_chroma_data:
+    name: rag_langchain_chroma_data
+    driver: local
+  rag_langchain_openwebui_data:
+    name: rag_langchain_openwebui_data
+    driver: local
+
+networks:
+  rag_langchain_net:
+    name: rag_langchain_net
+    driver: bridge
