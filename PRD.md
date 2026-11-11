@@ -211,6 +211,7 @@ rag_langchain/
 │   ├── raw/                 # Input Dokumen: Berkas Markdown (*.md)
 │   ├── processed/           # Arsip / Cache metadata terstruktur (.json / .md)
 │   └── dlq/                 # Dead-Letter Queue: Berkas .md korup/gagal beserta log error
+├── logs/                    # Catatan riwayat eksekusi pipeline & audit program (*.log)
 ├── src/
 │   ├── ingestion/           # Pipeline Ingestion: Markdown loader, validator teks, & DLQ handler
 │   ├── processing/          # Hierarchy-aware chunking (MarkdownHeader + RecursiveSplitter)

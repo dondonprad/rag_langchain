@@ -131,6 +131,7 @@ rag_langchain/
 │   │   └── prosedur_layanan.md
 │   ├── processed/           # Cache metadata & index serialisasi BM25
 │   └── dlq/                 # Dead-Letter Queue: Dokumen gagal/rusak untuk audit
+├── logs/                    # Catatan riwayat eksekusi pipeline & audit program (*.log)
 ├── src/
 │   ├── ingestion/           # Markdown loader native, sanitasi UTF-8, & DLQ handler
 │   ├── processing/          # Hierarchy-aware chunking (MarkdownHeader + RecursiveSplitter)

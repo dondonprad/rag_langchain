@@ -18,6 +18,11 @@ uvicorn>=0.30.0
 
 # Parsing & Pengolahan Dokumen Markdown On-Premise
 markdown>=3.5.0
+python-docx>=1.1.0
+openpyxl>=3.1.0
+xlrd>=2.0.1
+olefile>=0.46
+pymupdf>=1.23.0
 
 # Embedding, Reranking & NLP
 sentence-transformers>=2.3.0

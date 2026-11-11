@@ -1,1 +1,142 @@
-# Master configuration for rag_langchain (ChromaDB, BM25, GPU Embedding, Reranker, LLM)
+# ==============================================================================
+# MASTER CONFIGURATION: rag_langchain
+# Arsitektur: Advanced RAG Air-Gapped On-Premise (Intel Core Ultra 125H)
+# Referensi: PRD.md & SETUP.md
+# ==============================================================================
+
+app:
+  name: "rag_langchain"
+  version: "0.1.0"
+  description: "Advanced RAG On-Premise Air-Gapped Berbasis LangChain, ChromaDB, & BM25"
+  environment: "local"  # local | colab_gpu
+  air_gapped: true
+  telemetry_enabled: false
+
+# ------------------------------------------------------------------------------
+# 1. Jalur Direktori & Berkas (Storage & Paths)
+# ------------------------------------------------------------------------------
+paths:
+  data_raw_dir: "./data/raw"
+  data_processed_dir: "./data/processed"
+  data_dlq_dir: "./data/dlq"
+  dlq_error_log: "./data/dlq/error.log"
+  bm25_index_path: "./data/processed/bm25_index.pkl"
+  lineage_cache_path: "./data/processed/lineage_cache.json"
+  logs_dir: "./logs"
+  conversion_log_path: "./logs/conversion.log"
+  conversion_history_path: "./logs/conversion_history.jsonl"
+
+# ------------------------------------------------------------------------------
+# 2. Modul Ingestion & Data Quality Gates (FR-1, FR-2)
+# ------------------------------------------------------------------------------
+ingestion:
+  supported_extensions:
+    - ".md"
+  encoding: "utf-8"
+  hashing_algorithm: "sha256"
+  # Ambang batas minimal karakter teks untuk mencegah file kosong / corrupt
+  min_file_size_chars: 50
+  # Regex pola penanda nomor halaman manual pada dokumen Markdown
+  page_tag_patterns:
+    - '\[Hal:\s*(\d+)\]'
+    - '<!--\s*page:\s*(\d+)\s*-->'
+
+# ------------------------------------------------------------------------------
+# 3. Hierarchy-Aware Chunking (FR-3.1, FR-3.2)
+# ------------------------------------------------------------------------------
+chunking:
+  # Batas ukuran potongan per token (256 token ~ 1000 karakter)
+  chunk_size: 256
+  # Overlap ~10% (26 token)
+  chunk_overlap: 26
+  # Batasan bab semantik menggunakan MarkdownHeaderTextSplitter
+  headers_to_split_on:
+    - ["#", "Header 1"]
+    - ["##", "Header 2"]
+    - ["###", "Header 3"]
+
+# ------------------------------------------------------------------------------
+# 4. Dense Embeddings (Nomic GPU/CPU Local) (FR-3.4)
+# ------------------------------------------------------------------------------
+embeddings:
+  model_name: "nomic-ai/nomic-embed-text-v1.5"
+  # Target backend komputasi: 'cpu' untuk menghemat Shared VRAM saat LLM aktif, atau 'xpu' / 'cuda'
+  device: "cpu"
+  batch_size: 16
+  normalize_embeddings: true
+
+# ------------------------------------------------------------------------------
+# 5. Dense Vector Store (ChromaDB Docker) (FR-3.4)
+# ------------------------------------------------------------------------------
+vector_store:
+  provider: "chroma"
+  host: "localhost"
+  port: 8001
+  collection_name: "rag_langchain_kb"
+  persistence: true
+  distance_metric: "cosine"  # cosine | l2 | ip
+
+# ------------------------------------------------------------------------------
+# 6. Sparse Keyword Index (BM25) (FR-3.4)
+# ------------------------------------------------------------------------------
+sparse_index:
+  provider: "bm25"
+  k1: 1.5
+  b: 0.75
+
+# ------------------------------------------------------------------------------
+# 7. Pre-Retrieval Optimization (FR-4)
+# ------------------------------------------------------------------------------
+pre_retrieval:
+  multi_query:
+    enabled: true
+    num_queries: 3
+  hybrid_search:
+    enabled: true
+    # Kalibrasi Ensemble: 70% Semantic Dense + 30% Lexical Sparse BM25
+    dense_weight: 0.7
+    sparse_weight: 0.3
+    # Mengambil kandidat awal dalam jumlah lebih luas sebelum reranking
+    fetch_k: 20
+
+# ------------------------------------------------------------------------------
+# 8. Post-Retrieval Optimization (FR-5)
+# ------------------------------------------------------------------------------
+post_retrieval:
+  reranker:
+    enabled: true
+    model_name: "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    device: "cpu"
+    batch_size: 16
+    top_k: 5
+    score_threshold: 0.0
+  compression:
+    enabled: true
+    similarity_threshold: 0.7
+  reordering:
+    # Mengatasi lost-in-the-middle context attention
+    enabled: true
+  citation:
+    # Format sitasi kanonikal anti-halusinasi
+    format_template: "[Sumber: {document_name} | Bagian: {section} | Hal: {page_number}]"
+
+# ------------------------------------------------------------------------------
+# 9. Serving & Local LLM (Ollama Qwen 2.5) (FR-6)
+# ------------------------------------------------------------------------------
+llm:
+  provider: "ollama"
+  base_url: "http://localhost:11434"
+  base_url_docker: "http://host.docker.internal:11434"
+  model: "qwen2.5-7b-int4"
+  temperature: 0.1
+  max_tokens: 256
+  num_ctx: 2048
+
+# ------------------------------------------------------------------------------
+# 10. Batasan Hardware & Air-Gapped Guardrails (Section 4 & 7)
+# ------------------------------------------------------------------------------
+hardware:
+  shared_vram_limit_gb: 4.5
+  ollama_num_parallel: 1
+  sycl_immediate_cmd_lists: 1
+  ze_pci_id_device_order: 1

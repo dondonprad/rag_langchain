@@ -27,5 +27,8 @@ huggingface/
 .vscode/
 .idea/
 .DS_Store
+# Logs & Execution Traces
+logs/*
+!logs/.gitkeep
 *.log
 
